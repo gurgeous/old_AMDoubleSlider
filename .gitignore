@@ -1,0 +1,4 @@
+*.pbxuser
+*.xcworkspace
+*.xccheckout
+*/xcuserdata/
