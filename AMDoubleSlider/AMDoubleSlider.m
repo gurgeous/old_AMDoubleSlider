@@ -7,10 +7,14 @@
 
 #import "AMDoubleSlider.h"
 
-static const float gTextHeight = 13;
-static const CGSize gHandleImageSize = { 35, 35 };
-static const CGSize gBarImageSize = { 3, 2 };
-static const UIEdgeInsets gPadding = { 8, 0, 4, 0 };
+static const float kTextHeight = 13;
+static const CGSize kHandleImageSize = { 35, 35 };
+static const CGSize kBarImageSize = { 3, 2 };
+static const UIEdgeInsets kPadding = { 8, 0, 4, 0 };
+
+enum {
+    kNotPressed = -1,
+};
 
 //
 // some CG helpers
@@ -37,7 +41,8 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     // current handle positions (from 0..1)
     float _pos[2];
 
-    // which handle is being pressed? 0/1, or -1 if nothing is pressed
+    // which handle is being pressed? 0 is left, 1 is right and
+    // kNotPressed means... you guessed it.
     int _pressed;
 
     // where did the user start touching?
@@ -73,7 +78,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
 - (void)commonInit
 {
     CGRect frame = self.frame;
-    frame.size.height = gPadding.top + gTextHeight + gHandleImageSize.height + gPadding.bottom;
+    frame.size.height = kPadding.top + kTextHeight + kHandleImageSize.height + kPadding.bottom;
     self.frame = frame;
     self.backgroundColor = UIColor.clearColor;
     self.opaque = NO;
@@ -83,7 +88,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     _boundsMax = _pos[1] = 1;
 
     // nothing being pressed at the moment
-    _pressed = -1;
+    _pressed = kNotPressed;
 
     // load images
     _gray = [[UIImage imageNamed:@"AMDoubleSlider.bundle/gray.png"] stretchableImageWithLeftCapWidth:1 topCapHeight:0];
@@ -142,22 +147,22 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     CGRect bounds = self.bounds;
 
     //
-    // PADDING
+    // kPadding
     //
 
-    CGContextTranslateCTM(context, gPadding.left, gPadding.top);
-    bounds.size.width -= gPadding.left + gPadding.right;
-    bounds.size.height -= gPadding.top + gPadding.bottom;
+    CGContextTranslateCTM(context, kPadding.left, kPadding.top);
+    bounds.size.width -= kPadding.left + kPadding.right;
+    bounds.size.height -= kPadding.top + kPadding.bottom;
 
     //
     // Calculate bar left and right pixel coordinates. This corresponds to the
-    // 0..1 of _pos. We have to inset HANDLE.size because the handles are
+    // 0..1 of _pos. We have to inset kHandleImageSize because the handles are
     // centered on the bar. From here on out, the origin correponds to 0 and
     // bounds.width corresponds to 1.
     //
 
-    CGContextTranslateCTM(context, gHandleImageSize.width / 2, 0);
-    bounds.size.width -= gHandleImageSize.width;
+    CGContextTranslateCTM(context, kHandleImageSize.width / 2, 0);
+    bounds.size.width -= kHandleImageSize.width;
 
     int pixels[2];
     for (int i = 0; i <= 2; ++i) {
@@ -165,7 +170,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     }
 
     // the box includes the complete handles, all text, the bar, etc.
-    CGRect box = CGRectInsetWidth(bounds, -gHandleImageSize.width / 2);
+    CGRect box = CGRectInsetWidth(bounds, -kHandleImageSize.width / 2);
 
     //
     // labels
@@ -204,8 +209,8 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
         [strings[i] drawInRect:rects[i] withAttributes:attributes];
     }
 
-    bounds = CGRectInsetTop(bounds, gTextHeight);
-    CGContextTranslateCTM(context, 0, gTextHeight);
+    bounds = CGRectInsetTop(bounds, kTextHeight);
+    CGContextTranslateCTM(context, 0, kTextHeight);
 
     //
     // bar
@@ -213,19 +218,19 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     // The gray bar actually draws full width, with a slight inset.
     //
 
-    float y = (gHandleImageSize.height - gBarImageSize.height) / 2;
+    float y = (kHandleImageSize.height - kBarImageSize.height) / 2;
     static const int BAR_INSET = 10;
     CGRect gray = CGRectInsetWidth(box, BAR_INSET);
-    [_gray drawInRect:CGRectMake(gray.origin.x, y, gray.size.width,       gBarImageSize.height)];
-    [_blue drawInRect:CGRectMake(pixels[0],     y, pixels[1] - pixels[0], gBarImageSize.height)];
+    [_gray drawInRect:CGRectMake(gray.origin.x, y, gray.size.width,       kBarImageSize.height)];
+    [_blue drawInRect:CGRectMake(pixels[0],     y, pixels[1] - pixels[0], kBarImageSize.height)];
 
     //
     // handles
     //
 
-    int onTop = (_pressed == -1) ? 1 : _pressed;
-    [_handle drawAtPoint:CGPointMake(pixels[1 - onTop] - gHandleImageSize.height / 2, 0)];
-    [_handle drawAtPoint:CGPointMake(pixels[onTop]     - gHandleImageSize.height / 2, 0)];
+    int onTop = (_pressed == kNotPressed) ? 1 : _pressed;
+    [_handle drawAtPoint:CGPointMake(pixels[1 - onTop] - kHandleImageSize.height / 2, 0)];
+    [_handle drawAtPoint:CGPointMake(pixels[onTop]     - kHandleImageSize.height / 2, 0)];
 }
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
@@ -243,16 +248,16 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
 
     // are we touching anything?
     CGPoint touchPoint = [touch locationInView:self];
-    float w = self.bounds.size.width - gPadding.left - gPadding.right - gHandleImageSize.width;
+    float w = self.bounds.size.width - kPadding.left - kPadding.right - kHandleImageSize.width;
 
     float d[2];
     for (int i = 0; i < 2; ++i) {
-        d[i] = fabs((gHandleImageSize.width / 2) + (w * _pos[i]) - touchPoint.x);
+        d[i] = fabs((kHandleImageSize.width / 2) + (w * _pos[i]) - touchPoint.x);
     }
     int closest = (d[0] < d[1]) ? 0 : 1;
     if (d[closest] > FINGER) {
         // too far
-        _pressed = -1;
+        _pressed = kNotPressed;
         [self cancelTrackingWithEvent:event];
         return NO;
     }
@@ -271,7 +276,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     static const float BETWEEN = 10;
 
     CGPoint touchPoint = [touch locationInView:self];
-    float w = self.bounds.size.width - gPadding.left - gPadding.right - gHandleImageSize.width;
+    float w = self.bounds.size.width - kPadding.left - kPadding.right - kHandleImageSize.width;
     float p = _touchPos + (touchPoint.x - _touchX) / w;
 
     float l = _pos[0];
@@ -282,12 +287,12 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
         // dragging left handle - bound
         l = MAX(p, 0);
         if (r - l < between) {
-            r = MIN(l + between, 1.0f);
+            r = MIN(l + between, 1);
             l = r - between;
         }
     } else {
         // dragging right handle - bound
-        r = MIN(p, 1.0f);
+        r = MIN(p, 1);
         if (r - l < between) {
             l = MAX(r - between, 0);
             r = l + between;
@@ -303,7 +308,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
 
 -(void)endTrackingWithTouch:(UITouch *)touch withEvent:(UIEvent *)event
 {
-    _pressed = -1;
+    _pressed = kNotPressed;
     [self setNeedsDisplay];
     [self sendActionsForControlEvents:UIControlEventValueChanged];
 }
