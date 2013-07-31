@@ -283,6 +283,10 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     float r = _pos[1];
     float between = BETWEEN / w;
 
+    //
+    // calculate new l/r
+    //
+    
     if (_pressed == 0) {
         // dragging left handle - bound
         l = MAX(p, 0);
@@ -299,10 +303,26 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
         }
 
     }
-    _pos[0] = l;
-    _pos[1] = r;
 
+    //
+    // now update. Note that we're potentially sending many duplicate events
+    // due to rounding. This could be fixed by comparing the rounded values
+    // separately, but I'm not sure anyone cares.
+    //
+    
+    if (_pos[0] != l) {
+        [self willChangeValueForKey:@"min"];
+        _pos[0] = l;
+        [self didChangeValueForKey:@"min"];
+    }
+    if (_pos[1] != r) {
+        [self willChangeValueForKey:@"max"];
+        _pos[1] = r;
+        [self didChangeValueForKey:@"max"];
+    }
     [self setNeedsDisplay];
+    [self sendActionsForControlEvents:UIControlEventValueChanged];
+    
     return YES;
 }
 
