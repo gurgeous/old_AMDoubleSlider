@@ -165,7 +165,7 @@ static CGRect CGRectInsetWidth(CGRect r, float inset) {
     bounds.size.width -= kHandleImageSize.width;
 
     int pixels[2];
-    for (int i = 0; i <= 2; ++i) {
+    for (int i = 0; i < 2; ++i) {
         pixels[i] = _pos[i] * bounds.size.width;
     }
 
