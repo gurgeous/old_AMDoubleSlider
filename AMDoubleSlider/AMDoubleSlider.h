@@ -5,8 +5,8 @@
 //  Copyright (c) 2013 Adam Doppelt. All rights reserved.
 //
 
-typedef NSString *(^Labeler)(float value);
-typedef float (^Rounder)(float value);
+typedef NSString *(^AMLabeler)(float value);
+typedef float (^AMRounder)(float value);
 
 @interface AMDoubleSlider : UIControl
 
